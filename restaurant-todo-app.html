@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Restaurant App</title>
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #fef7f7;
+    }
+
+    .title {
+        text-align: center;
+    }
+
+    header {
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 900px;
+        margin: auto;
+        padding: 25px;
+    }
+
+    .input-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        background-color: transparent;
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-section label {
+        font-weight: bold;
+    }
+
+    .input-section select,
+    .input-section input[type="number"] {
+        flex: 1;
+        padding: 8px;
+        margin-right: 10px;
+    }
+    
+    .input-section button {
+        padding: 8px 16px;
+        background-color: #0d0c0c;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+    }
+
+    .input-section button:hover {
+        background-color: #444;
+    }
+
+    .orders-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    *:focus {
+    outline: none;
+    }
+
+    .table-section {
+        margin-bottom: 20px;
+    }
+
+    .table-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .order {
+        padding: 10px;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        /* gap: 20px; */
+        align-items: center;
+    }
+
+    .order-details {
+        flex: 1;
+    }
+
+    .delete-btn {
+        cursor: pointer;
+        color: red;
+        margin-left: 10px;
+    }
+    .submit-btn{
+        border: 0px;
+        border-radius: 5px;
+        width: 10rem;
+        height: 2.5rem;
+        font-weight: 600;
+        
+    }
+
+    @media screen and (max-width: 600px) {
+        .input-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<body>
+    <h1 class="title">Restaurant App</h1>
+    <div class="container">
+        <div class="input-section">
+            <label for="choose-price">Choose Price:</label>
+            <input type="number" id="choose-price">
+            <label for="choose-dish">Choose Dish:</label>
+            <select id="choose-dish">
+                <option value="Veg Briyani">Veg Briyani 🍛</option>
+                <option value="Fruit Salad">Fruit Salad 🥗</option> 
+                <option value="Milk Sake"> Milk Sake 🍶</option>
+                <option value="Chai & Bread Butter">Chai & Bread Butter ☕🍞 </option>
+            </select>
+
+            <label for="choose-table">Choose Table:</label>
+            <select id="choose-table">
+                <option value="No 1">Table 1</option>
+                <option value="No 2">Table 2</option>
+                <option value="No 3">Table 3</option>
+            </select>
+            <button class="submit-btn" onclick="addOrder()">Add Bill</button>
+        </div>
+        <div class="orders-section">
+            <!-- Orders will be displayed here -->
+        </div>
+    </div>
+
+        <!-- AXIOS API CDN URL  -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> 
+    <script>
+        const apiUrl = "https://crudcrud.com/api/c9c798cc6ec04b1db8e127c08b1710f3/restaurantbills";
+
+        // Fetch existing orders on page load
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                const response = await axios.get(apiUrl);
+                const orders = response.data;
+                orders.forEach(order => {
+                    console.log("Order Details");
+                    displayOrder(order);
+                    console.log("Table: " + order.table + " " + "Dish: " + order.dish + " " + "Price: " + order.price);
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        // adding order details using POST method
+        async function addOrder() {
+            const price = document.getElementById("choose-price").value;
+            const dish = document.getElementById("choose-dish").value;
+            const table = document.getElementById("choose-table").value;
+
+            const orderData = { price, dish, table };
+
+            try {
+                const response = await axios.post(apiUrl, orderData);
+                displayOrder(response.data);
+                console.log("Order details have been added!");
+                console.log(response.data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // displaying order details
+        function displayOrder(order) {
+            const ordersSection = document.querySelector(".orders-section");
+            let tableSection = ordersSection.querySelector(`.table-section[data-table="${order.table}"]`);
+
+            if (!tableSection) {
+                // Creating new table section if it doesn't exist
+                tableSection = document.createElement("div");
+                tableSection.classList.add("table-section");
+                tableSection.setAttribute("data-table", order.table);
+
+                const tableTitle = document.createElement("div");
+                tableTitle.classList.add("table-title");
+                tableTitle.textContent = `Table ${order.table}`;
+                tableSection.appendChild(tableTitle);
+
+                ordersSection.appendChild(tableSection);
+            }
+
+            const orderDiv = document.createElement("div");
+            orderDiv.classList.add("order");
+            orderDiv.setAttribute("data-id", order._id);
+            orderDiv.innerHTML = `<strong>Dish:</strong> ${order.dish} <strong>Price:</strong> ₹ ${order.price} 
+                    <span class="delete-btn" onclick="deleteOrder('${order._id}')">Delete</span>`;
+
+            tableSection.appendChild(orderDiv);
+        }
+
+        // deleting orders details by id
+        async function deleteOrder(orderId) {
+            try {
+                await axios.delete(`${apiUrl}/${orderId}`);
+                const orderDiv = document.querySelector(`[data-id='${orderId}']`);
+                if (orderDiv) {
+                    console.log(`Order details have been deleted for order id: ${orderId}`);
+                    orderDiv.remove();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+    </script>
+</body>
+</html>
